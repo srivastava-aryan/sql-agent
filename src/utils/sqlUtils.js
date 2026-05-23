@@ -1,19 +1,26 @@
 export function cleanSQL(rawSQL) {
   if (!rawSQL) return "";
 
-  // Remove markdown formatting if present
-  let cleaned = rawSQL.replace(/```sql|```/g, "");
+  let cleaned = rawSQL
+    .replace(/```sql/g, "")
+    .replace(/```/g, "")
+    .trim();
 
-  // Trim spaces
-  cleaned = cleaned.trim();
+  // Remove explanations before SELECT
+  const selectIndex = cleaned.toUpperCase().indexOf("SELECT");
 
-  // Remove explanation text (keep first semicolon query)
-  const match = cleaned.match(/.*?;/);
-  if (match) {
-    cleaned = match[0];
+  if (selectIndex !== -1) {
+    cleaned = cleaned.substring(selectIndex);
   }
 
-  return cleaned;
+  // Keep query till semicolon
+  const semicolonIndex = cleaned.indexOf(";");
+
+  if (semicolonIndex !== -1) {
+    cleaned = cleaned.substring(0, semicolonIndex + 1);
+  }
+
+  return cleaned.trim();
 }
 
 export function isSafeQuery(sql) {

@@ -4,14 +4,13 @@ dotenv.config();
 import cors from 'cors';
 import pool from './src/db/db.index.js';
 import queryRoutes from './src/routes/queryRoutes.js';
-import { initRAG, addDocuments } from './src/services/ragService.js';
+import { initVectorStore } from './src/services/ragService.js';
 
 const app = express();
 app.use(cors());
 app.use(express.json());
 
-await initRAG();
-await addDocuments();
+await initVectorStore();
 
 app.get('/', (req, res) => {
     res.send("🏃‍♂️‍➡️Agent is running");

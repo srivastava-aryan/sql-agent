@@ -1,10 +1,13 @@
-import { schema } from "../utils/schema.js";
+// import { schema } from "../utils/schema.js";
+import { getDatabaseSchema } from "./schemaService.js";
 import { getMemory } from "../utils/memory.js";
 import { retrieveContext } from "./ragService.js";
 
 export async function generateSQL(query, sessionId) {
   const context = await retrieveContext(query);
-  const history = getMemory(sessionId)
+  const schema = await getDatabaseSchema();
+  console.log("[generateSQL] Retrieved schema:", schema);
+  const history = (await getMemory(sessionId))
     .map((msg) => `User: ${msg}`)
     .join("\n");
   const prompt = `
@@ -20,9 +23,11 @@ Conversation History:
 ${history}
 
 Rules:
+- Only generate PostgreSQL SQL syntax
+- Do not use MySQL functions like DATE_SUB
 - Only generate SQL
-- Do not explain anything
-- Use only the tables and columns provided
+- No explanations
+- Use only provided schema information
 
 User Query:
 "${query}"

@@ -1,36 +1,29 @@
-import { ChromaClient } from "chromadb";
+import { MemoryVectorStore } from "@langchain/classic/vectorstores/memory";
+import { OllamaEmbeddings } from "@langchain/ollama";
 
-const client = new ChromaClient();
+let vectorStore;
 
-let collection;
-
-export async function initRAG() {
-  collection = await client.getOrCreateCollection({
-    name: "sql_context",
+export async function initVectorStore() {
+  const embeddings = new OllamaEmbeddings({
+    model: "nomic-embed-text",
+    baseUrl: "http://localhost:11434",
   });
-}
 
-function ensureCollection() {
-  if (!collection) {
-    throw new Error("RAG collection is not initialized. Call initRAG() first.");
-  }
-}
-
-export async function addDocuments() {
-  await collection.add({
-    ids: ["1", "2"],
-    documents: [
+  vectorStore = await MemoryVectorStore.fromTexts(
+    [
       "Active users are users who logged in within the last 30 days.",
-      "High value customers are those whose total spending is greater than 10000.",
+      "High value customers are customers with spending greater than 10000.",
+      "Recent users are users created in the last 7 days.",
     ],
-  });
+    [{ id: 1 }, { id: 2 }, { id: 3 }],
+    embeddings
+  );
+
+  console.log("✅ Vector store initialized");
 }
 
 export async function retrieveContext(query) {
-  const results = await collection.query({
-    queryTexts: [query],
-    nResults: 2,
-  });
+  const results = await vectorStore.similaritySearch(query, 2);
 
-  return results.documents.flat().join("\n");
+  return results.map((doc) => doc.pageContent).join("\n");
 }
